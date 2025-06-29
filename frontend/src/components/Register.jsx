@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
@@ -18,10 +20,12 @@ export default function Register() {
     e.preventDefault();
     try {
       await axios.post(`${BACKEND_URL}/api/auth/register`, form);
-      alert('Registration successful!');
+      // alert('Registration successful!');
+      toast.success("Registration successful!");
       navigate('/login');
     } catch (err) {
-      alert(err.response?.data?.message || 'Registration failed');
+      // alert(err.response?.data?.message || 'Registration failed');
+      toast.error("Registration failed");
     }
   };
 

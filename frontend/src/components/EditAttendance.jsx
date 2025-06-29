@@ -3,6 +3,9 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import useClassInfo from './useClassInfo';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 
 export default function EditAttendance() {
   const { classId, date } = useParams();
@@ -18,7 +21,6 @@ export default function EditAttendance() {
 
     const fetchData = async () => {
       try {
-        // Fetch students
         const studentRes = await axios.get(
           `${BACKEND_URL}/api/student/${classId}`,
           { headers: { Authorization: `${token}` } }
@@ -28,7 +30,6 @@ export default function EditAttendance() {
         );
         setStudents(sortedStudents);
 
-        // Fetch existing attendance
         const attendanceRes = await axios.get(
           `${BACKEND_URL}/api/attendance/${classId}/${date}`,
           { headers: { Authorization: `${token}` } }
@@ -39,7 +40,6 @@ export default function EditAttendance() {
           initial[r.studentId._id] = r.status;
         });
 
-        // Ensure all students are present in the attendance
         sortedStudents.forEach(s => {
           if (!initial[s._id]) {
             initial[s._id] = 'Absent';
@@ -49,7 +49,7 @@ export default function EditAttendance() {
         setAttendance(initial);
       } catch (err) {
         console.error('Error fetching data:', err);
-        alert('Error fetching data.');
+        toast.error('Error fetching data');
         navigate('/');
       }
     };
@@ -65,7 +65,17 @@ export default function EditAttendance() {
   };
 
   const handleSubmit = async () => {
-    if (!window.confirm('Are you sure you want to update attendance?')) return;
+    const confirm = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to update this attendance?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, update it!',
+    });
+
+    if (!confirm.isConfirmed) return;
 
     const records = students.map(s => ({
       studentId: s._id,
@@ -79,18 +89,22 @@ export default function EditAttendance() {
         { headers: { Authorization: `${token}` } }
       );
 
-      alert('Attendance updated successfully!');
+      toast.success('Attendance updated successfully!');
       navigate(`/attendance/view/${classId}`);
     } catch (err) {
       console.error('Error updating attendance:', err);
-      alert('Error updating attendance.');
+      toast.error('Error updating attendance');
     }
   };
 
   return (
     <div style={containerStyle}>
-      <h2 style={headerStyle}>{classInfo.name} ({classInfo.subject}) - Edit Attendance</h2>
-      <p style={subHeaderStyle}>Date: <strong>{date}</strong></p>
+      <h2 style={headerStyle}>
+        {classInfo.name} ({classInfo.subject}) - Edit Attendance
+      </h2>
+      <p style={subHeaderStyle}>
+        Date: <strong>{date}</strong>
+      </p>
 
       <div style={{ overflowX: 'auto' }}>
         <table style={tableStyle}>
@@ -113,7 +127,9 @@ export default function EditAttendance() {
                       checked={attendance[student._id] === 'Present'}
                       onChange={() => handleToggle(student._id)}
                     />
-                    <span>{attendance[student._id] === 'Present' ? 'Present' : 'Absent'}</span>
+                    <span>
+                      {attendance[student._id] === 'Present' ? 'Present' : 'Absent'}
+                    </span>
                   </label>
                 </td>
               </tr>
@@ -122,12 +138,18 @@ export default function EditAttendance() {
         </table>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: '24px',
+        }}
+      >
         <button
           onClick={handleSubmit}
           style={blueButton}
-          onMouseOver={e => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-          onMouseOut={e => e.currentTarget.style.backgroundColor = '#2563eb'}
+          onMouseOver={e => (e.currentTarget.style.backgroundColor = '#1d4ed8')}
+          onMouseOut={e => (e.currentTarget.style.backgroundColor = '#2563eb')}
         >
           ✅ Update Attendance
         </button>
@@ -211,4 +233,3 @@ const cancelButton = {
   fontSize: '0.9rem',
   padding: '4px',
 };
-

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function EditClass() {
   const { classId } = useParams();
@@ -25,7 +27,8 @@ export default function EditClass() {
         });
       } catch (err) {
         console.error('Error fetching class:', err);
-        alert('Failed to fetch class info');
+        // alert('Failed to fetch class info');
+        toast.error("Failed to fetch class info");
         navigate('/');
       }
     };
@@ -45,11 +48,13 @@ export default function EditClass() {
         form,
         { headers: { Authorization: `${token}` } }
       );
-      alert('Class updated successfully');
+      // alert('Class updated successfully');
+      toast.success("Class updated successfully!");
       navigate('/');
     } catch (err) {
       console.error('Error updating class:', err);
-      alert('Update failed');
+      // alert('Update failed');
+      toast.success("Update failed");
     }
   };
 

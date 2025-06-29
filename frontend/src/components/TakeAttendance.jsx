@@ -3,7 +3,9 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import useClassInfo from './useClassInfo';
 import BACKEND_URL from '../config';
-
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function TakeAttendance() {
   const { classId } = useParams();
@@ -31,13 +33,13 @@ export default function TakeAttendance() {
         setAttendance(initial);
       } catch (err) {
         console.error('Error fetching students:', err);
-        alert('Failed to fetch students.');
+        toast.error('Failed to fetch students');
         navigate('/');
       }
     };
 
     fetchStudents();
-  }, [classId]);
+  }, [classId, token, navigate]);
 
   const handleToggle = (studentId) => {
     setAttendance((prev) => ({
@@ -47,7 +49,17 @@ export default function TakeAttendance() {
   };
 
   const handleSubmit = async () => {
-    if (!window.confirm('Are you sure you want to submit attendance?')) return;
+    const confirm = await Swal.fire({
+      title: 'Submit Attendance?',
+      text: 'Are you sure you want to save this attendance?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#16a34a',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Save',
+    });
+
+    if (!confirm.isConfirmed) return;
 
     const data = students.map((s) => ({
       studentId: s._id,
@@ -60,11 +72,11 @@ export default function TakeAttendance() {
         { classId, date: today, records: data },
         { headers: { Authorization: `${token}` } }
       );
-      alert('Attendance saved successfully!');
+      toast.success('Attendance saved successfully!');
       navigate('/');
     } catch (err) {
       console.error('Error saving attendance:', err);
-      alert('Error saving attendance.');
+      toast.error('Attendance already exist!');
     }
   };
 
@@ -78,7 +90,6 @@ export default function TakeAttendance() {
         backgroundColor: '#f9fafb',
       }}
     >
-      
       <h2
         style={{
           fontSize: '1.8rem',
@@ -136,7 +147,9 @@ export default function TakeAttendance() {
                       checked={attendance[student._id] === 'Present'}
                       onChange={() => handleToggle(student._id)}
                     />
-                    {attendance[student._id] === 'Present' ? 'Present' : 'Absent'}
+                    {attendance[student._id] === 'Present'
+                      ? 'Present'
+                      : 'Absent'}
                   </label>
                 </td>
               </tr>
@@ -145,18 +158,16 @@ export default function TakeAttendance() {
         </table>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: '24px',
+        }}
+      >
         <button
           onClick={handleSubmit}
-          style={{
-            backgroundColor: '#16a34a',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '600',
-          }}
+          style={saveButtonStyle}
           onMouseEnter={(e) => (e.target.style.backgroundColor = '#15803d')}
           onMouseLeave={(e) => (e.target.style.backgroundColor = '#16a34a')}
         >
@@ -180,4 +191,14 @@ const tdStyle = {
   padding: '10px 16px',
   color: '#374151',
   fontSize: '0.95rem',
+};
+
+const saveButtonStyle = {
+  backgroundColor: '#16a34a',
+  color: 'white',
+  padding: '10px 20px',
+  borderRadius: '8px',
+  border: 'none',
+  cursor: 'pointer',
+  fontWeight: '600',
 };

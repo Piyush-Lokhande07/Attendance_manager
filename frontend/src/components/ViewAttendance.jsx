@@ -3,7 +3,62 @@ import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import useClassInfo from './useClassInfo';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import 'react-toastify/dist/ReactToastify.css';
 
+
+// ✅ Shared Styles — declare before component
+const inputStyle = {
+  border: '1px solid #d1d5db',
+  padding: '6px 12px',
+  borderRadius: '6px',
+  marginRight: '8px',
+};
+
+const thStyle = {
+  padding: '12px 16px',
+  textAlign: 'left',
+  fontWeight: '600',
+  color: '#374151',
+  borderBottom: '2px solid #d1d5db',
+};
+
+const tdStyle = {
+  padding: '10px 16px',
+  color: '#374151',
+  fontSize: '0.95rem',
+};
+
+const blueBtn = {
+  backgroundColor: '#2563eb',
+  color: 'white',
+  padding: '6px 12px',
+  borderRadius: '6px',
+  border: 'none',
+  cursor: 'pointer',
+  fontWeight: '600',
+};
+
+const greenBtn = {
+  ...blueBtn,
+  backgroundColor: '#16a34a',
+};
+
+const redBtn = {
+  ...blueBtn,
+  backgroundColor: '#dc2626',
+};
+
+const yellowBtn = {
+  ...blueBtn,
+  backgroundColor: '#ca8a04',
+  marginLeft: '8px',
+};
+
+
+
+// ✅ Main Component
 export default function ViewAttendance() {
   const { classId } = useParams();
   const navigate = useNavigate();
@@ -17,67 +72,91 @@ export default function ViewAttendance() {
   const classInfo = useClassInfo(classId);
 
   const handleViewByDate = async () => {
-    if (!date) return alert('Please select a date');
+    if (!date) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Date',
+        text: 'Please select a date to view attendance.',
+      });
+      return;
+    }
 
     try {
       const res = await axios.get(
         `${BACKEND_URL}/api/attendance/${classId}/${date}`,
-        { headers: { Authorization: ` ${token}` } }
+        { headers: { Authorization: `${token}` } }
       );
       setAttendanceByDate(res.data);
       setSummary([]);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error fetching attendance');
+      toast.error('Error fetching attendance');
       setAttendanceByDate(null);
     }
   };
 
   const handleViewByRange = async () => {
-  if (!start || !end) return alert('Select both start and end dates');
+    if (!start || !end) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Dates',
+        text: 'Please select both start and end dates.',
+      });
+      return;
+    }
 
-  try {
-    const res = await axios.get(
-      `${BACKEND_URL}/api/attendance/summary/${classId}`,
-      {
-        params: { start, end },
-        headers: { Authorization: `${token}` },
-      }
-    );
-    const sorted = res.data.sort((a, b) => Number(a.rollNo) - Number(b.rollNo));
-    setSummary(sorted);
-    setAttendanceByDate(null);
-  } catch (err) {
-    alert(err.response?.data?.message || 'Error fetching summary');
-    setSummary([]);
-  }
-};
+    try {
+      const res = await axios.get(
+        `${BACKEND_URL}/api/attendance/summary/${classId}`,
+        {
+          params: { start, end },
+          headers: { Authorization: `${token}` },
+        }
+      );
+      const sorted = res.data.sort(
+        (a, b) => Number(a.rollNo) - Number(b.rollNo)
+      );
+      setSummary(sorted);
+      setAttendanceByDate(null);
+    } catch (err) {
+      toast.error('Error fetching summary');
+      setSummary([]);
+    }
+  };
 
-const handleExportExcel = async () => {
-  if (!start || !end) return alert('Select both start and end dates');
+  const handleExportExcel = async () => {
+    if (!start || !end) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Dates',
+        text: 'Please select both start and end dates to export.',
+      });
+      return;
+    }
 
-  try {
-    const res = await axios.get(
-      `${BACKEND_URL}/api/attendance/export/${classId}`,
-      {
-        params: { start, end },
-        headers: { Authorization: `${token}` },
-        responseType: 'blob',
-      }
-    );
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `attendance-summary-${start}-to-${end}.xlsx`
-    );
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } catch (err) {
-    alert('Error exporting to Excel');
-  }
-};
+    try {
+      const res = await axios.get(
+        `${BACKEND_URL}/api/attendance/export/${classId}`,
+        {
+          params: { start, end },
+          headers: { Authorization: `${token}` },
+          responseType: 'blob',
+        }
+      );
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `attendance-summary-${start}-to-${end}.xlsx`
+      );
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      toast.error('Error exporting to Excel');
+    }
+  };
+
 
 
   return (
@@ -102,10 +181,19 @@ const handleExportExcel = async () => {
       </h2>
 
       {/* Control Panel */}
-      <div style={{ display: 'flex', gap: '48px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '48px',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+        }}
+      >
         {/* View by Date */}
         <div>
-          <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>View by Date</h3>
+          <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>
+            View by Date
+          </h3>
           <input
             type="date"
             value={date}
@@ -119,7 +207,9 @@ const handleExportExcel = async () => {
 
         {/* View by Range */}
         <div>
-          <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>View Summary (Range)</h3>
+          <h3 style={{ fontWeight: '600', marginBottom: '8px' }}>
+            View Summary (Range)
+          </h3>
           <input
             type="date"
             value={start}
@@ -144,7 +234,13 @@ const handleExportExcel = async () => {
       {/* Attendance By Date */}
       {attendanceByDate && (
         <div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '8px' }}>
+          <h3
+            style={{
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              marginBottom: '8px',
+            }}
+          >
             Attendance on {attendanceByDate.date}
           </h3>
           <Table
@@ -169,7 +265,14 @@ const handleExportExcel = async () => {
       {/* Attendance Summary */}
       {summary.length > 0 && (
         <div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginTop: '32px', marginBottom: '8px' }}>
+          <h3
+            style={{
+              fontSize: '1.1rem',
+              fontWeight: '600',
+              marginTop: '32px',
+              marginBottom: '8px',
+            }}
+          >
             Attendance Summary from {start} to {end}
           </h3>
           <Table
@@ -187,6 +290,8 @@ const handleExportExcel = async () => {
     </div>
   );
 }
+
+
 
 // ✅ Table Component
 function Table({ headers, rows }) {
@@ -233,48 +338,3 @@ function Table({ headers, rows }) {
   );
 }
 
-// ✅ Shared Styles
-const inputStyle = {
-  border: '1px solid #d1d5db',
-  padding: '6px 12px',
-  borderRadius: '6px',
-  marginRight: '8px',
-};
-
-const thStyle = {
-  padding: '12px 16px',
-  textAlign: 'left',
-  fontWeight: '600',
-  color: '#374151',
-  borderBottom: '2px solid #d1d5db',
-};
-
-const tdStyle = {
-  padding: '10px 16px',
-  color: '#374151',
-  fontSize: '0.95rem',
-};
-
-// ✅ Button Styles
-const blueBtn = {
-  backgroundColor: '#2563eb',
-  color: 'white',
-  padding: '6px 12px',
-  borderRadius: '6px',
-  border: 'none',
-  cursor: 'pointer',
-  fontWeight: '600',
-};
-const greenBtn = {
-  ...blueBtn,
-  backgroundColor: '#16a34a',
-};
-const redBtn = {
-  ...blueBtn,
-  backgroundColor: '#dc2626',
-};
-const yellowBtn = {
-  ...blueBtn,
-  backgroundColor: '#ca8a04',
-  marginLeft: '8px',
-};

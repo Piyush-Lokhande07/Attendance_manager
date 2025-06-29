@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import EditClass from './components/EditClass';
 import EditAttendance from './components/EditAttendance';
 import Landing from './components/Landing';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
    const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
@@ -24,6 +26,7 @@ function App() {
 
   return (
     <Router>
+      <ToastContainer position="top-center" autoClose={2000} />
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<Login onLogin={() => setIsAuthenticated(true)} />} />

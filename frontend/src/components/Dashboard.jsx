@@ -3,15 +3,15 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 export default function Dashboard() {
   const [classes, setClasses] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-
   const user = token ? jwtDecode(token) : { name: '' };
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function Dashboard() {
       } catch (err) {
         console.error('Fetching classes failed:', err);
         localStorage.removeItem('token');
-        navigate('/login');
+        navigate('/');
       }
     };
 
@@ -37,17 +37,27 @@ export default function Dashboard() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this class?')) return;
+    const confirm = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will delete the class and its data permanently.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!',
+    });
 
-    try {
-      await axios.delete(`${BACKEND_URL}/api/class/${id}`, {
-        headers: { Authorization: `${token}` },
-      });
-      setClasses((prev) => prev.filter((cls) => cls._id !== id));
-      alert('Class deleted successfully!');
-    } catch (err) {
-      console.error('Delete failed:', err);
-      alert('Failed to delete class');
+    if (confirm.isConfirmed) {
+      try {
+        await axios.delete(`${BACKEND_URL}/api/class/${id}`, {
+          headers: { Authorization: `${token}` },
+        });
+        setClasses((prev) => prev.filter((cls) => cls._id !== id));
+        toast.success('Class deleted successfully!');
+      } catch (err) {
+        console.error('Delete failed:', err);
+        toast.error('Failed to delete class');
+      }
     }
   };
 
@@ -82,15 +92,14 @@ export default function Dashboard() {
             cursor: 'pointer',
             boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
             transition: 'background-color 0.3s',
-            
           }}
           onMouseEnter={(e) => (e.target.style.backgroundColor = '#1d4ed8')}
           onMouseLeave={(e) => (e.target.style.backgroundColor = '#2563eb')}
         >
           <FontAwesomeIcon
-                        icon={faPlus}
-                        style={{ color: 'white', fontSize: '14px', marginRight: '5px' }}
-                      />
+            icon={faPlus}
+            style={{ color: 'white', fontSize: '14px', marginRight: '5px' }}
+          />
           Create Class
         </button>
       </div>
@@ -116,7 +125,13 @@ export default function Dashboard() {
               gap: '10px',
             }}
           >
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1f2937' }}>
+            <h3
+              style={{
+                fontSize: '1.2rem',
+                fontWeight: 'bold',
+                color: '#1f2937',
+              }}
+            >
               {cls.name}
             </h3>
             <p style={{ fontSize: '0.95rem', color: '#4b5563' }}>
@@ -142,7 +157,13 @@ export default function Dashboard() {
                 onClick={() => handleDelete(cls._id)}
                 style={buttonStyle('#f87171')}
               >
-                <FontAwesomeIcon icon={faTrash} style={{ color: 'rgb(64, 62, 76)', marginRight: '5px' }} />
+                <FontAwesomeIcon
+                  icon={faTrash}
+                  style={{
+                    color: 'rgb(64, 62, 76)',
+                    marginRight: '5px',
+                  }}
+                />
                 Delete
               </button>
 
@@ -174,7 +195,7 @@ export default function Dashboard() {
   );
 }
 
-// Reusable button styling
+// ✅ Reusable button styling
 const buttonStyle = (bgColor) => ({
   backgroundColor: bgColor,
   color: '#1f2937',
@@ -191,7 +212,4 @@ const buttonStyle = (bgColor) => ({
   maxWidth: '100%',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  // Simple hover effect without darker shades
-  onMouseEnter: (e) => (e.target.style.opacity = 0.9),
-  onMouseLeave: (e) => (e.target.style.opacity = 1),
 });

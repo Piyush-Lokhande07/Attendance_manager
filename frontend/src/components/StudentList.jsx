@@ -5,6 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import useClassInfo from './useClassInfo';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function StudentList() {
   const { classId } = useParams();
@@ -28,10 +31,9 @@ export default function StudentList() {
       });
       const sortedStudents = res.data.sort((a, b) => a.rollNo - b.rollNo);
       setStudents(sortedStudents);
-      // setStudents(res.data);
     } catch (err) {
       console.error('Error fetching students:', err);
-      alert('Error fetching students');
+      toast.error('Error fetching data');
     }
   };
 
@@ -45,9 +47,10 @@ export default function StudentList() {
       );
       setStudents((prev) => [...prev, res.data]);
       setNewStudent({ name: '', rollNo: '' });
+      toast.success('Student added');
     } catch (err) {
       console.error('Error adding student:', err);
-      alert(err.response?.data?.message || 'Error adding student');
+      toast.error('Error adding student');
     }
   };
 
@@ -67,22 +70,35 @@ export default function StudentList() {
         prev.map((s) => (s._id === id ? { ...s, ...res.data } : s))
       );
       setEditingId(null);
+      toast.success('Student updated');
     } catch (err) {
       console.error('Error updating student:', err);
-      alert(err.response?.data?.message || 'Error updating student');
+      toast.error('Error updating student');
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this student?')) return;
+    const confirm = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will delete the student permanently.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (!confirm.isConfirmed) return;
+
     try {
       await axios.delete(`${BACKEND_URL}/api/student/${id}`, {
         headers: { Authorization: `${token}` },
       });
       setStudents((prev) => prev.filter((s) => s._id !== id));
+      toast.success('Student deleted successfully! ');
     } catch (err) {
       console.error('Error deleting student:', err);
-      alert('Error deleting student');
+      toast.error('Error deleting student');
     }
   };
 
@@ -125,8 +141,6 @@ export default function StudentList() {
             alignItems: 'center',
           }}
         >
-          
-
           <input
             type="text"
             placeholder="Roll No"

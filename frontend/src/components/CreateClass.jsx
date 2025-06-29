@@ -2,6 +2,8 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function CreateClass() {
   const [form, setForm] = useState({ name: '', subject: '' });
@@ -20,11 +22,13 @@ export default function CreateClass() {
           Authorization: `${token}`,
         },
       });
-      alert('Class created successfully!');
+      // alert('Class created successfully!');
+      toast.success("Class created successfully!");
       navigate('/');
     } catch (err) {
       console.error('Error creating class:', err);
-      alert(err.response?.data?.message || 'Failed to create class');
+      // alert(err.response?.data?.message || 'Failed to create class');
+      toast.error("Failed to create class");
     }
   };
 

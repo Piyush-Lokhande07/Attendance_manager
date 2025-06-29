@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 export default function Login({ onLogin }) {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -20,11 +23,13 @@ export default function Login({ onLogin }) {
       const res = await axios.post(`${BACKEND_URL}/api/auth/login`, form);
       localStorage.setItem('token', res.data.token);
       onLogin();
-      alert('Login successful!');
+      // alert('Login successful!');
+      toast.success("Login successfull");
       navigate('/', { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      alert(err.response?.data?.message || 'Login failed');
+      // alert(err.response?.data?.message || 'Login failed');
+      toast.error("Login failed");
     }
   };
 

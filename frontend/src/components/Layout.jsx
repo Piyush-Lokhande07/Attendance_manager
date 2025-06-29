@@ -2,6 +2,9 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 import BACKEND_URL from '../config';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Swal from 'sweetalert2';
 
 export default function Layout({ onLogout }) {
   const navigate = useNavigate();
@@ -15,12 +18,17 @@ export default function Layout({ onLogout }) {
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      !window.confirm(
-        'Are you sure you want to delete your account? This cannot be undone.'
-      )
-    )
-      return;
+    const confirm = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will delete your account permanently.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (!confirm.isConfirmed) return;
 
     try {
       await axios.delete(`${BACKEND_URL}/api/user/delete`, {
@@ -31,10 +39,10 @@ export default function Layout({ onLogout }) {
       onLogout();
       navigate('/');
 
-      alert('Account deleted successfully!');
+      toast.success('Account deleted successfully!');
     } catch (err) {
       console.error('Error deleting account:', err);
-      alert(err.response?.data?.message || 'Failed to delete account.');
+      toast.error('Failed to delete account');
     }
   };
 
@@ -92,24 +100,15 @@ export default function Layout({ onLogout }) {
             Hi, {user?.name || 'User'}
           </span>
 
-          <button
-            onClick={() => navigate('/')}
-            style={dashboardButtonStyle}
-          >
+          <button onClick={() => navigate('/')} style={dashboardButtonStyle}>
             Dashboard
           </button>
 
-          <button
-            onClick={handleLogout}
-            style={logoutButtonStyle}
-          >
+          <button onClick={handleLogout} style={logoutButtonStyle}>
             Logout
           </button>
 
-          <button
-            onClick={handleDeleteAccount}
-            style={deleteButtonStyle}
-          >
+          <button onClick={handleDeleteAccount} style={deleteButtonStyle}>
             Delete Account
           </button>
         </div>
